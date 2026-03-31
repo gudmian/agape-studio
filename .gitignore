@@ -1,0 +1,29 @@
+# Зависимости
+node_modules/
+frontend/node_modules/
+
+# Сборка фронтенда
+frontend/dist/
+
+# Go
+backend/tmp/
+backend/data/
+*.exe
+
+# Переменные окружения (НИКОГДА не коммитить)
+.env
+backend/.env
+
+# БД
+*.db
+*.db-shm
+*.db-wal
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/settings.json
+*.swp

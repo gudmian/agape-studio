@@ -1,0 +1,183 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: var(--nav-height);
+  transition: background-color var(--transition-base), backdrop-filter var(--transition-base),
+              box-shadow var(--transition-base);
+}
+
+.header.scrolled {
+  background-color: rgba(245, 243, 237, 0.95);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--content-padding);
+}
+
+/* ── Логотип ── */
+.logo {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-logo);
+  color: var(--color-surface);
+  text-transform: uppercase;
+  transition: color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.scrolled .logo {
+  color: var(--color-dark);
+}
+
+/* ── Десктопная навигация ── */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+.navLink {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  color: rgba(245, 243, 237, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color var(--transition-fast);
+  position: relative;
+}
+
+.navLink::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: currentColor;
+  transition: width var(--transition-base);
+}
+
+.navLink:hover::after {
+  width: 100%;
+}
+
+.navLink:hover {
+  color: var(--color-surface);
+}
+
+.scrolled .navLink {
+  color: var(--color-text-secondary);
+}
+
+.scrolled .navLink:hover {
+  color: var(--color-dark);
+}
+
+/* ── CTA кнопка ── */
+.ctaDesktop {
+  flex-shrink: 0;
+}
+
+/* ── Мобильная часть ── */
+.mobileRight {
+  display: none;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ctaMobile {
+  font-size: 12px !important;
+}
+
+/* ── Бургер ── */
+.burger {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.burgerLine {
+  display: block;
+  width: 100%;
+  height: 1.5px;
+  background-color: var(--color-surface);
+  transition: transform var(--transition-base), opacity var(--transition-fast);
+  transform-origin: center;
+}
+
+.scrolled .burgerLine {
+  background-color: var(--color-dark);
+}
+
+.open1 { transform: translateY(6.5px) rotate(45deg); }
+.open2 { opacity: 0; transform: scaleX(0); }
+.open3 { transform: translateY(-6.5px) rotate(-45deg); }
+
+/* ── Мобильное меню ── */
+.mobileMenu {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-4) 0 var(--space-6);
+}
+
+.mobileNavLink {
+  padding: var(--space-4) var(--content-padding);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-dark);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--color-border);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.mobileNavLink:last-child {
+  border-bottom: none;
+}
+
+.mobileNavLink:hover {
+  color: var(--color-primary);
+  background-color: var(--color-background);
+}
+
+/* ── Адаптивность ── */
+@media (max-width: 768px) {
+  .nav {
+    gap: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav {
+    display: none;
+  }
+
+  .ctaDesktop {
+    display: none;
+  }
+
+  .mobileRight {
+    display: flex;
+  }
+}

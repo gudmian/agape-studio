@@ -1,0 +1,144 @@
+.section {
+  background-color: var(--color-background);
+  padding: 80px 0;
+}
+
+.inner {
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--content-padding);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 80px;
+  align-items: start;
+}
+
+/* ── Левая колонка ── */
+.intro {
+  position: sticky;
+  top: calc(var(--nav-height) + 32px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 2.8vw, 40px);
+  font-weight: var(--weight-regular);
+  line-height: 1.2;
+  color: var(--color-dark);
+}
+
+.titleLine {
+  display: block;
+}
+
+.description {
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-2);
+}
+
+/* ── Правая колонка — шаги ── */
+.steps {
+  display: flex;
+  flex-direction: column;
+}
+
+.step {
+  padding-block: 24px;
+}
+
+.stepDivider {
+  height: 1px;
+  background-color: var(--color-border);
+  margin-bottom: 24px;
+}
+
+.step:first-child .stepDivider {
+  display: none;
+}
+
+.stepContent {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.stepNumber {
+  font-family: var(--font-display);
+  font-size: var(--text-step-num);
+  font-weight: var(--weight-light);
+  line-height: 1;
+  color: rgba(61, 74, 46, 0.28);
+  width: 52px;
+  flex-shrink: 0;
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+.stepTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: var(--weight-regular);
+  line-height: 1.27;
+  color: var(--color-dark);
+}
+
+.stepDesc {
+  font-size: var(--text-xs);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-secondary);
+}
+
+/* ── Планшет ── */
+@media (max-width: 768px) {
+  .section {
+    padding: 64px 0;
+  }
+
+  .layout {
+    grid-template-columns: 1fr 1.4fr;
+    gap: 48px;
+  }
+
+  .intro {
+    position: static;
+  }
+
+  .title {
+    font-size: clamp(24px, 4vw, 32px);
+  }
+}
+
+/* ── Мобильный ── */
+@media (max-width: 600px) {
+  .section {
+    padding: 52px 0;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .stepContent {
+    gap: 20px;
+  }
+}

@@ -1,0 +1,129 @@
+.hero {
+  position: relative;
+  width: 100%;
+  min-height: 900px;
+  background-color: var(--color-hero-bg);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+/* Фоновое фото (placeholder — подставить реальное изображение) */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-hero-bg);
+  /* background-image: url('/images/hero.jpg'); */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Градиентный оверлей */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(13, 18, 8, 0.88) 0%,
+    rgba(13, 18, 8, 0.45) 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+  z-index: 1;
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--content-padding);
+  padding-bottom: 88px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 28px;
+  max-width: 680px;
+}
+
+.headline {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-display);
+  font-size: var(--text-hero);
+  font-weight: var(--weight-light);
+  line-height: 1.09;
+  color: var(--color-surface);
+  margin: 0;
+}
+
+.headlineLine {
+  display: block;
+}
+
+.subtitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-relaxed);
+  color: rgba(245, 243, 237, 0.72);
+  max-width: 520px;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* ── Планшет ── */
+@media (max-width: 768px) {
+  .hero {
+    min-height: 680px;
+  }
+
+  .inner {
+    padding-bottom: 64px;
+  }
+
+  .content {
+    gap: 20px;
+  }
+
+  .subtitle {
+    font-size: var(--text-base);
+  }
+}
+
+/* ── Мобильный ── */
+@media (max-width: 480px) {
+  .hero {
+    min-height: 600px;
+  }
+
+  .inner {
+    padding-bottom: 52px;
+  }
+
+  .headline {
+    font-weight: var(--weight-regular);
+  }
+
+  .subtitle {
+    font-size: var(--text-sm);
+  }
+
+  .buttons {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .buttons > * {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -1,0 +1,31 @@
+version: '3.9'
+
+# Локальная разработка с hot-reload Go через Air
+# Запуск: docker compose -f docker-compose.dev.yml up
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: agape-backend-dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      ENV: development
+      DATABASE_URL: /app/data/agape.db
+      CORS_ORIGINS: http://localhost:5173,http://localhost:5174
+    volumes:
+      - ./backend:/app
+      - backend_data_dev:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  backend_data_dev:
+    driver: local

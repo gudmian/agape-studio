@@ -1,0 +1,77 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-btn);
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast),
+              border-color var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* ── Размеры ── */
+.sm {
+  height: 33px;
+  padding: 0 24px;
+  font-size: var(--text-xxs);
+  letter-spacing: 1.65px;
+}
+
+.md {
+  height: 43px;
+  padding: 0 32px;
+  font-size: var(--text-xxs);
+  letter-spacing: 1.8px;
+}
+
+.lg {
+  height: 53px;
+  padding: 0 36px;
+  font-size: var(--text-base);
+  letter-spacing: var(--tracking-btn);
+}
+
+/* ── Варианты ── */
+.primary {
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  border-color: var(--color-primary);
+}
+
+.primary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.secondary {
+  background-color: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.secondary:hover {
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+}
+
+/* Ghost — для тёмных фонов (Hero) */
+.ghost {
+  background-color: transparent;
+  color: var(--color-surface);
+  border-color: var(--color-surface);
+}
+
+.ghost:hover {
+  background-color: rgba(245, 243, 237, 0.15);
+}

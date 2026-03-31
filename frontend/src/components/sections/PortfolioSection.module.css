@@ -1,0 +1,128 @@
+.section {
+  background-color: var(--color-background);
+  padding: 80px 0;
+}
+
+.inner {
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--content-padding);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* ── Карточка проекта ── */
+.card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.cardImage {
+  width: 100%;
+  aspect-ratio: 413 / 240;
+  background-color: var(--color-surface-alt);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-base);
+}
+
+.card:hover .cardImage {
+  background-color: #1f2617;
+}
+
+.cardImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.card:hover .cardImage img {
+  transform: scale(1.04);
+}
+
+/* imageDark больше не применяется по умолчанию */
+.imageDark {
+  background-color: var(--color-surface-alt);
+}
+
+.imagePlaceholderText {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  transition: color var(--transition-base);
+}
+
+.card:hover .imagePlaceholderText {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.cardInfo {
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cardTitle {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--weight-regular);
+  line-height: 1.3;
+  color: var(--color-dark);
+}
+
+.cardMeta {
+  font-size: var(--text-xxs);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+}
+
+/* ── Планшет: 2 колонки ── */
+@media (max-width: 768px) {
+  .section {
+    padding: 64px 0;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* 5-й и 6-й проект скрываем на планшете (показываем 4) */
+  .grid > *:nth-child(n+5) {
+    display: none;
+  }
+}
+
+/* ── Мобильный: 1 колонка ── */
+@media (max-width: 480px) {
+  .section {
+    padding: 52px 0;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* На мобильном показываем 3 проекта */
+  .grid > *:nth-child(n+4) {
+    display: none;
+  }
+}

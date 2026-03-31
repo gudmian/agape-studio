@@ -1,0 +1,109 @@
+/* ============================================================
+   AGAPE Design Tokens — из Figma дизайн-системы
+   ============================================================ */
+
+:root {
+  /* ── Цвета ── */
+  --color-primary: #3d4a2e;
+  --color-primary-hover: #5a6b40;
+  --color-dark: #2a2a24;
+  --color-background: #eeece4;
+  --color-surface: #f5f3ed;
+  --color-surface-alt: #e8e6d6;
+  --color-border: #d8d5cb;
+  --color-text-secondary: #64645a;
+  --color-text-muted: #8c8c80;
+  --color-hero-bg: #1a1f14;
+
+  /* ── Шрифты ── */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* ── Размеры шрифтов ── */
+  --text-hero: clamp(40px, 5.8vw, 84px);
+  --text-h1: clamp(32px, 3.9vw, 56px);
+  --text-h2: clamp(28px, 2.8vw, 40px);
+  --text-h3: clamp(20px, 2.1vw, 30px);
+  --text-h4: 22px;
+  --text-step-num: clamp(28px, 2.5vw, 36px);
+  --text-xl: 20px;
+  --text-lg: 18px;
+  --text-base: 16px;
+  --text-sm: 14px;
+  --text-xs: 13px;
+  --text-xxs: 12px;
+  --text-label: 11px;
+
+  /* ── Толщины шрифтов ── */
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* ── Межстрочный интервал ── */
+  --leading-tight: 1.1;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* ── Межбуквенный интервал ── */
+  --tracking-logo: 2.24px;
+  --tracking-label: 1.1px;
+  --tracking-label-wide: 1.8px;
+  --tracking-btn: 0.64px;
+  --tracking-btn-sm: 0.48px;
+
+  /* ── Спейсинг ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ── Радиусы ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 999px;
+
+  /* ── Высота навигации ── */
+  --nav-height: 72px;
+
+  /* ── Максимальная ширина контента ── */
+  --content-max: 1440px;
+  --content-padding: var(--space-20);
+
+  /* ── Переходы ── */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+  --transition-slow: 0.4s ease;
+
+  /* ── Тени ── */
+  --shadow-card: 0 2px 12px rgba(42, 42, 36, 0.08);
+  --shadow-card-hover: 0 8px 32px rgba(42, 42, 36, 0.14);
+}
+
+/* ── Планшет (≤ 768px) ── */
+@media (max-width: 768px) {
+  :root {
+    --nav-height: 64px;
+    --content-padding: 48px;
+  }
+}
+
+/* ── Мобильный (≤ 480px) ── */
+@media (max-width: 480px) {
+  :root {
+    --nav-height: 60px;
+    --content-padding: 20px;
+  }
+}

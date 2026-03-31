@@ -1,0 +1,64 @@
+.footer {
+  background-color: var(--color-dark);
+  height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.inner {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--content-padding);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-logo);
+  color: var(--color-surface);
+  text-transform: uppercase;
+}
+
+.copyright {
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Планшет ── */
+@media (max-width: 768px) {
+  .footer {
+    height: 64px;
+  }
+
+  .logo {
+    font-size: var(--text-sm);
+    letter-spacing: 1.96px;
+  }
+
+  .copyright {
+    font-size: var(--text-xxs);
+  }
+}
+
+/* ── Мобильный ── */
+@media (max-width: 480px) {
+  .footer {
+    height: auto;
+    padding-block: 20px;
+  }
+
+  .inner {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .copyright {
+    font-size: 11px;
+  }
+}

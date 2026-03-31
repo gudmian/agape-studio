@@ -1,0 +1,20 @@
+# Dev Dockerfile с Air для hot-reload
+FROM golang:1.22-alpine
+
+RUN apk add --no-cache gcc musl-dev curl
+
+# Устанавливаем Air для hot-reload
+RUN curl -fLo /usr/local/bin/air \
+    https://github.com/air-verse/air/releases/download/v1.52.3/air_1.52.3_linux_amd64 && \
+    chmod +x /usr/local/bin/air
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+EXPOSE 8080
+
+CMD ["air", "-c", ".air.toml"]
