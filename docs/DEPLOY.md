@@ -1,6 +1,42 @@
 # Деплой — AGAPE
 
-Два варианта: **Vercel + Railway** (облако, просто) или **VPS + Nginx** (полный контроль).
+## Текущая конфигурация (production)
+
+| Компонент | Сервис | Детали |
+|-----------|--------|--------|
+| **Сервер** | Timeweb Cloud VPS | Ubuntu 24.04, 1 CPU, 1GB RAM, IP: `92.51.38.130` |
+| **Домен** | agapedesign.ru | DNS: A-запись → `92.51.38.130` |
+| **SSL** | Let's Encrypt | Автопродление через certbot, истекает 2026-07-01 |
+| **Бэкенд** | systemd `agape-backend` | Go-бинарь, порт 8080, автозапуск |
+| **Фронтенд** | Nginx | Статика из `/var/www/agape/frontend/dist/` |
+| **База данных** | SQLite | `/var/www/agape/backend/data/agape.db` |
+
+**Сайт:** https://agapedesign.ru
+
+---
+
+## Обновление сайта (после изменений в коде)
+
+```bash
+# Подключиться к серверу
+ssh root@92.51.38.130
+
+# Обновить код
+cd /var/www/agape && git pull
+
+# Пересобрать бэкенд (если менялся Go-код)
+export PATH=$PATH:/usr/local/go/bin
+cd backend && CGO_ENABLED=0 go build -ldflags="-w -s" -o server ./cmd/server
+systemctl restart agape-backend
+
+# Пересобрать фронтенд (если менялся React-код)
+cd /var/www/agape/frontend && npm run build
+# Nginx подхватит автоматически — перезапуск не нужен
+```
+
+---
+
+Два варианта: **VPS + Nginx** (текущий) или **Vercel + Railway** (облако).
 
 ---
 
