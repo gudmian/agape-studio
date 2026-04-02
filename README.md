@@ -93,3 +93,4 @@ cd frontend && npm run dev
 - [Фронтенд](docs/FRONTEND.md)
 - [Бэкенд](docs/BACKEND.md)
 - [Деплой](docs/DEPLOY.md)
+- [CMS](docs/CMS.md)
