@@ -1,9 +1,9 @@
 import { useReveal } from '../../hooks/useReveal';
-import { content } from '../../data/content';
+import { useSiteContent } from '../../content/siteContentContext';
 import styles from './ProcessSection.module.css';
 
 export function ProcessSection() {
-  const { process } = content;
+  const { process } = useSiteContent();
   const sectionRef = useReveal();
 
   return (

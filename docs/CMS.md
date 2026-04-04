@@ -67,6 +67,7 @@
 
 - `meta_title`, `meta_description`
 - `hero_badge`, `hero_headline_line1`, `hero_headline_line2`, `hero_subtitle`, `hero_cta_primary`, `hero_cta_secondary`
+- `hero_background_image` — **файл (image)** для фона Hero (топовая работа); на сайте — эффект parallax при скролле (отключается при `prefers-reduced-motion`)
 - `portfolio_eyebrow`, `portfolio_title`, `portfolio_subtitle`
 - `services_eyebrow`, `services_title`
 - `process_eyebrow`, `process_title_line1`, `process_title_line2`, `process_description`
@@ -208,7 +209,7 @@ Authorization: Bearer <STATIC_TOKEN>
 Singleton:
 
 ```http
-GET https://cms.agapedesign.ru/items/site_content
+GET `https://cms.agapedesign.ru/items/site_content/singleton` **или** (в части сборок) `GET …/items/site_content` — фронт пробует оба варианта.
 Authorization: Bearer <STATIC_TOKEN>
 ```
 

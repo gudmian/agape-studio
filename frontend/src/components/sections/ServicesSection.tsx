@@ -1,7 +1,7 @@
 import { useReveal } from '../../hooks/useReveal';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { content } from '../../data/content';
+import { useSiteContent } from '../../content/siteContentContext';
 import type { Service } from '../../types';
 import styles from './ServicesSection.module.css';
 
@@ -55,7 +55,7 @@ function ServiceCard({ service, index }: { service: Service; index: number }) {
 }
 
 export function ServicesSection() {
-  const { services } = content;
+  const { services } = useSiteContent();
   const sectionRef = useReveal();
 
   return (

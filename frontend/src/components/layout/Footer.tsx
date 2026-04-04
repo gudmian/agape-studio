@@ -1,8 +1,8 @@
-import { content } from '../../data/content';
+import { useSiteContent } from '../../content/siteContentContext';
 import styles from './Footer.module.css';
 
 export function Footer() {
-  const { footer } = content;
+  const { footer } = useSiteContent();
 
   return (
     <footer className={styles.footer}>

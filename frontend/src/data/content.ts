@@ -18,6 +18,7 @@ export const content: SiteContent = {
     subtitle: 'Создаём авторские интерьеры — от концепции до сдачи ключей',
     ctaPrimary: 'ОБСУДИТЬ ПРОЕКТ',
     ctaSecondary: 'СМОТРЕТЬ РАБОТЫ',
+    // backgroundImageUrl: задайте при статическом контенте или через Directus → site_content.hero_background_image
   },
 
   portfolio: {

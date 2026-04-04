@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useReveal } from '../../hooks/useReveal';
 import { Button } from '../ui/Button';
-import { content } from '../../data/content';
+import { useSiteContent } from '../../content/siteContentContext';
 import type { ContactFormData } from '../../types';
 import styles from './ContactSection.module.css';
 
@@ -16,10 +16,11 @@ const INITIAL_FORM: ContactFormData = {
 };
 
 export function ContactSection() {
-  const { contact } = content;
+  const { contact } = useSiteContent();
   const sectionRef = useReveal();
   const [form, setForm] = useState<ContactFormData>(INITIAL_FORM);
   const [status, setStatus] = useState<FormStatus>('idle');
+  const descriptionLines = contact.description.split('\n');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -59,10 +60,10 @@ export function ContactSection() {
           </span>
           <h2 className={styles.title}>{contact.title}</h2>
           <p className={styles.description}>
-            {contact.description.split('\n').map((line, i) => (
+            {descriptionLines.map((line, i) => (
               <span key={i}>
                 {line}
-                {i < contact.description.split('\n').length - 1 && <br />}
+                {i < descriptionLines.length - 1 && <br />}
               </span>
             ))}
           </p>

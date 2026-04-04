@@ -1,5 +1,5 @@
 import { useReveal } from '../../hooks/useReveal';
-import { content } from '../../data/content';
+import { useSiteContent } from '../../content/siteContentContext';
 import type { Project } from '../../types';
 import styles from './PortfolioSection.module.css';
 
@@ -29,7 +29,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 }
 
 export function PortfolioSection() {
-  const { portfolio } = content;
+  const { portfolio } = useSiteContent();
   const sectionRef = useReveal();
 
   return (

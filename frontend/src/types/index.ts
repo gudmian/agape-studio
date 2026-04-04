@@ -41,6 +41,8 @@ export interface SiteContent {
     subtitle: string;
     ctaPrimary: string;
     ctaSecondary: string;
+    /** URL фонового фото (Hero / топовая работа), например из Directus */
+    backgroundImageUrl?: string;
   };
   portfolio: {
     eyebrow: string;
