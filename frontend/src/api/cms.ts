@@ -5,6 +5,11 @@ type DirectusListResponse<T> = {
   data: T[]
 }
 
+type ProjectGalleryRow = {
+  sort?: number | null
+  file?: string | { id: string } | null
+}
+
 type ProjectItem = {
   slug: string
   title: string
@@ -12,6 +17,10 @@ type ProjectItem = {
   area: string
   city: string
   image?: string | { id: string } | null
+  /** Устаревший способ: JSON-массив UUID (если осталось со старого bootstrap) */
+  gallery?: unknown
+  /** O2M: строки в project_gallery с файлом и sort — удобное заполнение в админке */
+  gallery_items?: ProjectGalleryRow[] | null
   image_placeholder_dark?: boolean | null
 }
 
@@ -73,6 +82,7 @@ async function directusRequest<T>(path: string): Promise<T> {
   }
 
   const response = await fetch(`${baseUrl}${path}`, {
+    cache: 'no-store',
     headers: token
       ? {
           Authorization: `Bearer ${token}`,
@@ -112,6 +122,7 @@ async function fetchSiteContentItem(): Promise<SiteContentItem | null> {
   for (const path of paths) {
     try {
       const response = await fetch(`${baseUrl}${path}`, {
+        cache: 'no-store',
         headers: token
           ? {
               Authorization: `Bearer ${token}`,
@@ -149,16 +160,80 @@ function getImageUrl(
   return assetUrlWithAccessToken(`${baseUrl}/assets/${id}`, token)
 }
 
+function parseGalleryFileIds(gallery: ProjectItem['gallery']): string[] {
+  if (gallery == null) return []
+  if (Array.isArray(gallery)) {
+    return gallery.filter((id): id is string => typeof id === 'string' && id.length > 0)
+  }
+  if (typeof gallery === 'string') {
+    try {
+      const parsed = JSON.parse(gallery) as unknown
+      if (Array.isArray(parsed)) {
+        return parsed.filter((id): id is string => typeof id === 'string' && id.length > 0)
+      }
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
+function galleryUrlsFromO2M(
+  rows: NonNullable<ProjectItem['gallery_items']>,
+  baseUrl: string,
+  token?: string,
+): string[] {
+  const sorted = [...rows].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
+  const urls: string[] = []
+  for (const row of sorted) {
+    const url = getImageUrl(row.file, baseUrl, token)
+    if (url) urls.push(url)
+  }
+  return urls
+}
+
+function buildProjectGalleryUrls(
+  item: ProjectItem,
+  baseUrl: string,
+  token?: string,
+): string[] {
+  const main = getImageUrl(item.image, baseUrl, token)
+  const fromO2M =
+    item.gallery_items && item.gallery_items.length > 0
+      ? galleryUrlsFromO2M(item.gallery_items, baseUrl, token)
+      : []
+  const legacyIds = parseGalleryFileIds(item.gallery)
+  const legacyUrls = legacyIds.map((id) => assetUrlWithAccessToken(`${baseUrl}/assets/${id}`, token))
+  const ordered: string[] = []
+  const seen = new Set<string>()
+  for (const url of [main, ...fromO2M, ...legacyUrls]) {
+    if (url && !seen.has(url)) {
+      seen.add(url)
+      ordered.push(url)
+    }
+  }
+  return ordered
+}
+
+/** Поля проекта + вложенная галерея (O2M). */
+const PROJECTS_LIST_QUERY =
+  '/items/projects?filter[status][_eq]=published&sort=sort&fields=' +
+  encodeURIComponent('*,gallery_items.sort,gallery_items.file')
+
 function mapProjects(items: ProjectItem[], baseUrl: string, token?: string): Project[] {
-  return items.map((item) => ({
-    id: item.slug,
-    title: item.title,
-    style: item.style,
-    area: item.area,
-    city: item.city,
-    imageUrl: getImageUrl(item.image, baseUrl, token),
-    imagePlaceholder: item.image_placeholder_dark ? 'dark' : undefined,
-  }))
+  return items.map((item) => {
+    const galleryUrls = buildProjectGalleryUrls(item, baseUrl, token)
+    return {
+      id: item.slug,
+      title: item.title,
+      style: item.style,
+      area: item.area,
+      city: item.city,
+      imageUrl: getImageUrl(item.image, baseUrl, token),
+      galleryUrls: galleryUrls.length > 0 ? galleryUrls : undefined,
+      imagePlaceholder: item.image_placeholder_dark ? 'dark' : undefined,
+    }
+  })
 }
 
 function mapServices(items: ServiceItem[]): Service[] {
@@ -275,9 +350,7 @@ export async function loadSiteContentFromCms(): Promise<SiteContent> {
 
   try {
     const [projectsRes, servicesRes, stepsRes] = await Promise.all([
-      directusRequest<DirectusListResponse<ProjectItem>>(
-        '/items/projects?filter[status][_eq]=published&sort=sort',
-      ),
+      directusRequest<DirectusListResponse<ProjectItem>>(PROJECTS_LIST_QUERY),
       directusRequest<DirectusListResponse<ServiceItem>>(
         '/items/services?filter[status][_eq]=published&sort=sort',
       ),

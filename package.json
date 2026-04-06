@@ -1,0 +1,9 @@
+{
+  "name": "agape",
+  "private": true,
+  "description": "Корневые скрипты для Directus bootstrap (без зависимостей в корне)",
+  "scripts": {
+    "directus:bootstrap": "node scripts/directus-bootstrap.mjs",
+    "directus:migrate-gallery-fk": "node scripts/migrate-sqlite-project-gallery-fk.mjs"
+  }
+}

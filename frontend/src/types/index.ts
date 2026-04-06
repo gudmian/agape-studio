@@ -5,6 +5,8 @@ export interface Project {
   area: string;
   city: string;
   imageUrl?: string;
+  /** Все кадры галереи (первая обычно совпадает с обложкой карточки). Из CMS: image + поле gallery. */
+  galleryUrls?: string[];
   imagePlaceholder?: string;
 }
 

@@ -261,6 +261,14 @@ async function listFields(token, collection) {
   return body.data ?? []
 }
 
+/** Тип поля `id` у коллекции (SQLite у Directus часто integer, Postgres — uuid). */
+function foreignKeyTypeMatchingPrimaryId(idField) {
+  if (!idField?.type) return 'uuid'
+  const t = String(idField.type).toLowerCase()
+  if (t === 'integer' || t === 'biginteger') return 'integer'
+  return 'uuid'
+}
+
 async function ensureField(token, collection, fieldDef) {
   const existing = await listFields(token, collection)
   if (existing.some((f) => f.field === fieldDef.field)) {
@@ -320,6 +328,132 @@ async function ensureM2OFileRelation(token, manyCollection, manyField, oneCollec
   console.log(`  + связь M2O: ${manyCollection}.${manyField} → ${oneCollection}`)
 }
 
+/**
+ * M2O с обратным полем O2M на стороне «one» (список связанных записей в карточке проекта).
+ */
+async function ensureM2ORelationToOne(
+  token,
+  manyCollection,
+  manyField,
+  oneCollection,
+  { oneField = null, onDelete = 'SET NULL' } = {},
+) {
+  const checkRes = await api(
+    token,
+    `/relations/${encodeURIComponent(manyCollection)}/${encodeURIComponent(manyField)}`,
+  )
+  const checkBody = await checkRes.json().catch(() => ({}))
+  if (checkRes.ok && checkBody.data) {
+    const rel = checkBody.data
+    const ok =
+      rel.related_collection === oneCollection ||
+      rel.meta?.one_collection === oneCollection
+    if (ok) return
+  }
+
+  const payload = {
+    collection: manyCollection,
+    field: manyField,
+    related_collection: oneCollection,
+    schema: {
+      on_delete: onDelete,
+    },
+  }
+  if (oneField) {
+    payload.meta = { one_field: oneField }
+  }
+
+  const postRes = await api(token, '/relations', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  const postBody = await postRes.json().catch(() => ({}))
+  if (!postRes.ok) {
+    console.warn(
+      `Связь ${manyCollection}.${manyField} → ${oneCollection} не создана (${postRes.status}):`,
+      JSON.stringify(postBody),
+    )
+    return
+  }
+  console.log(
+    `  + связь M2O: ${manyCollection}.${manyField} → ${oneCollection}` +
+      (oneField ? ` (O2M на ${oneCollection}: ${oneField})` : ''),
+  )
+}
+
+/**
+ * Галерея проекта: отдельные строки с файлом и порядком — удобнее, чем JSON-массив UUID.
+ * В админке: запись projects → блок «Gallery items» → создать элемент, выбрать файл, задать sort.
+ */
+async function ensureProjectGallerySchema(token) {
+  const projectsFields = await listFields(token, 'projects')
+  const projectsPkType = foreignKeyTypeMatchingPrimaryId(projectsFields.find((f) => f.field === 'id'))
+
+  await ensureCollection(token, 'project_gallery', {
+    icon: 'collections',
+    note: 'Кадры галереи проекта (O2M к projects)',
+  })
+  await ensureField(token, 'project_gallery', {
+    field: 'sort',
+    type: 'integer',
+    meta: { interface: 'input', note: 'Порядок в галерее (0, 1, 2…)' },
+    schema: { is_nullable: true, default_value: 0 },
+  })
+  await ensureField(token, 'project_gallery', {
+    field: 'project',
+    type: projectsPkType,
+    meta: { interface: 'select-dropdown-m2o', special: ['m2o'], required: true },
+    schema: {
+      is_nullable: false,
+      foreign_key_table: 'projects',
+      foreign_key_column: 'id',
+    },
+  })
+  await ensureField(token, 'project_gallery', {
+    field: 'file',
+    type: 'uuid',
+    meta: { interface: 'file-image', special: ['file'], required: true },
+    schema: {
+      is_nullable: false,
+      foreign_key_table: 'directus_files',
+      foreign_key_column: 'id',
+    },
+  })
+  await ensureM2OFileRelation(token, 'project_gallery', 'file')
+  /*
+   * Важно: alias O2M на projects должен существовать ДО связи M2O с one_field,
+   * иначе в админке Directus часто ломается открытие записи проекта (Page Not Found).
+   * См. обсуждения: сначала поле, потом relation.
+   */
+  const existingProjects = await listFields(token, 'projects')
+  if (!existingProjects.some((f) => f.field === 'gallery_items')) {
+    await ensureField(token, 'projects', {
+      field: 'gallery_items',
+      type: 'alias',
+      meta: {
+        interface: 'list-o2m',
+        special: ['o2m'],
+        related_collection: 'project_gallery',
+        note: 'Доп. фото для модальной галереи на сайте (перетаскивание по полю sort)',
+        options: {
+          sort_field: 'sort',
+          // Без file.$thumbnail: вложенная подгрузка файла в списке O2M провоцировала у Directus 11.3.x
+          // ошибки вида «Missing parentItem '1' of 'projects' when merging o2m nested items».
+          template: '{{sort}}',
+        },
+      },
+      schema: null,
+    })
+  }
+  await ensureM2ORelationToOne(token, 'project_gallery', 'project', 'projects', {
+    oneField: 'gallery_items',
+    onDelete: 'CASCADE',
+  })
+  console.log(
+    '  → Галерея: в проекте используйте блок «Gallery items», не JSON. Токену API нужно read для project_gallery.',
+  )
+}
+
 const statusMeta = {
   interface: 'select-dropdown',
   options: {
@@ -373,6 +507,7 @@ async function ensureSchema(token) {
     },
   })
   await ensureM2OFileRelation(token, 'projects', 'image')
+  await ensureProjectGallerySchema(token)
   await ensureField(token, 'projects', {
     field: 'image_placeholder_dark',
     type: 'boolean',

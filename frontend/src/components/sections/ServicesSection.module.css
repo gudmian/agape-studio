@@ -9,22 +9,30 @@
   padding-inline: var(--content-padding);
 }
 
+/*
+ * Flex + wrap вместо grid с фиксированными 3 колонками:
+ * при 1–2 услугах нет «пустой» третьей ячейки в ряду.
+ */
 .grid {
-  display: grid;
-  grid-template-columns: repeat(3, 300px);
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  align-items: stretch;
   gap: 24px;
 }
 
 /* ── Карточка услуги ── */
 .card {
+  box-sizing: border-box;
+  flex: 0 1 300px;
+  max-width: min(300px, 100%);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   background-color: var(--color-surface);
   padding: 28px;
   display: flex;
   flex-direction: column;
-  min-height: 460px;
+  min-height: 0;
   transition: box-shadow var(--transition-base), transform var(--transition-base);
 }
 
@@ -78,7 +86,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .featureItem {
@@ -137,13 +146,13 @@
   }
 
   .grid {
-    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
   }
 
   .card {
+    flex: 0 1 min(300px, calc(50% - 8px));
+    max-width: min(300px, calc(50% - 8px));
     padding: 20px;
-    min-height: 400px;
   }
 }
 
@@ -154,11 +163,11 @@
   }
 
   .grid {
-    grid-template-columns: 1fr;
     gap: 16px;
   }
 
   .card {
-    min-height: auto;
+    flex: 1 1 100%;
+    max-width: 100%;
   }
 }

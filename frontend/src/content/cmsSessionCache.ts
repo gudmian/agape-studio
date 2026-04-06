@@ -1,7 +1,8 @@
 import { content as fallbackContent } from '../data/content'
 import type { SiteContent } from '../types'
 
-const CACHE_KEY = 'agape_site_content_v1'
+/** Меняйте суффикс при смене формы кэшируемых данных, чтобы сбросить устаревший sessionStorage. */
+const CACHE_KEY = 'agape_site_content_v2'
 
 function readParseCache(): SiteContent | null {
   if (typeof window === 'undefined') return null

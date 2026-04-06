@@ -1,0 +1,34 @@
+# Пример unit для systemd. Скопируйте в /etc/systemd/system/directus.service
+# и отредактируйте User, WorkingDirectory, PUBLIC_URL, путь к Node (which node).
+#
+#   sudo cp deploy/directus.service.example /etc/systemd/system/directus.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now directus
+
+[Unit]
+Description=Directus CMS (AGAPE)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/cms
+
+# Node из nvm укажите полным путём, иначе systemd не найдёт бинарь:
+# ExecStart=/home/directus/.nvm/versions/node/v22.0.0/bin/npx directus start
+ExecStart=/usr/bin/npx directus start
+
+Restart=always
+RestartSec=5
+
+Environment=NODE_ENV=production
+Environment=PORT=8055
+# Обязательно совпадает с публичным URL за Nginx (и с Project URL в Directus):
+Environment=PUBLIC_URL=https://cms.example.com
+
+# Опционально: лимиты для слабого VPS
+# MemoryMax=400M
+
+[Install]
+WantedBy=multi-user.target

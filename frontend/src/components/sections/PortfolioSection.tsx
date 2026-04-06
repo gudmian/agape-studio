@@ -1,28 +1,52 @@
+import { useCallback, useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { useReveal } from '../../hooks/useReveal';
 import { useSiteContent } from '../../content/siteContentContext';
 import type { Project } from '../../types';
+import { PortfolioGalleryModal } from './PortfolioGalleryModal';
 import styles from './PortfolioSection.module.css';
 
-function ProjectCard({ project, index }: { project: Project; index: number }) {
+function ProjectCard({
+  project,
+  index,
+  onOpen,
+}: {
+  project: Project;
+  index: number;
+  onOpen: (project: Project) => void;
+}) {
+  const open = useCallback(() => onOpen(project), [onOpen, project]);
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      open();
+    }
+  };
+
   return (
     <article
       className={`${styles.card} reveal reveal-delay-${(index % 3) + 1}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`Открыть галерею: ${project.title}`}
+      onClick={open}
+      onKeyDown={onKeyDown}
     >
       <div
         className={`${styles.cardImage} ${project.imagePlaceholder === 'dark' ? styles.imageDark : ''}`}
-        aria-label={`Фото проекта: ${project.title}`}
       >
         {project.imageUrl ? (
-          <img src={project.imageUrl} alt={`${project.title} — ${project.style}`} />
+          <img src={project.imageUrl} alt="" />
         ) : (
           <span className={styles.imagePlaceholderText}>[ Фото интерьера ]</span>
         )}
-      </div>
-      <div className={styles.cardInfo}>
-        <h3 className={styles.cardTitle}>{project.title}</h3>
-        <p className={styles.cardMeta}>
-          {project.style} / {project.area} • {project.city}
-        </p>
+        <div className={styles.cardOverlay} aria-hidden="true">
+          <p className={styles.overlayTitle}>{project.title}</p>
+          <p className={styles.overlayMeta}>
+            {project.style}, {project.area}
+          </p>
+        </div>
       </div>
     </article>
   );
@@ -31,6 +55,10 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 export function PortfolioSection() {
   const { portfolio } = useSiteContent();
   const sectionRef = useReveal();
+  const [galleryProject, setGalleryProject] = useState<Project | null>(null);
+  const galleryOpen = galleryProject !== null;
+
+  const closeGallery = useCallback(() => setGalleryProject(null), []);
 
   return (
     <section
@@ -47,10 +75,12 @@ export function PortfolioSection() {
 
         <div className={styles.grid}>
           {portfolio.projects.map((project, i) => (
-            <ProjectCard key={project.id} project={project} index={i} />
+            <ProjectCard key={project.id} project={project} index={i} onOpen={setGalleryProject} />
           ))}
         </div>
       </div>
+
+      <PortfolioGalleryModal project={galleryProject} open={galleryOpen} onClose={closeGallery} />
     </section>
   );
 }

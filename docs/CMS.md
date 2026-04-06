@@ -2,6 +2,8 @@
 
 Сайт сейчас берёт контент из `frontend/src/data/content.ts`. После подключения CMS редактор меняет данные в панели, а фронтенд подгружает их через REST API.
 
+**Развёртывание Directus на VPS (пошагово, проверка каждого этапа, скрипты):** [DIRECTUS-VPS-DEPLOY.md](./DIRECTUS-VPS-DEPLOY.md).
+
 ---
 
 ## 1. Что выбрать
@@ -32,10 +34,26 @@
 | `style` | string | да | `style` |
 | `area` | string | да | `area` |
 | `city` | string | да | `city` |
-| `image` | file (image) | нет | → URL для `imageUrl` |
+| `image` | file (image) | нет | → URL для `imageUrl` (обложка карточки и первый кадр галереи) |
+| `gallery_items` | O2M → коллекция `project_gallery` | нет | **Рекомендуемый способ:** в карточке проекта блок со списком строк; в каждой строке поле `file` (картинка) и `sort` (порядок). На фронте подмешивается к `image` в `galleryUrls`. |
+| `gallery` | JSON (массив UUID) | нет | *Устарело* (старый bootstrap): если поле ещё есть в БД, фронт по-прежнему учитывает его после O2M. |
 | `image_placeholder_dark` | boolean | нет | если true → `imagePlaceholder: 'dark'` (опционально) |
 | `sort` | integer | да | порядок в сетке |
 | `status` | dropdown: published / draft | да | на фронте только `published` |
+
+Коллекция **`project_gallery`**: поля `project` (M2O → `projects`), `file` (M2O → файл), `sort` (integer). Для **статического токена** API добавьте право **read** на `project_gallery`, иначе вложенные `gallery_items` не придут в ответ.
+
+**SQLite:** у коллекций Directus первичный ключ `id` часто **INTEGER** (автоинкремент), а не UUID. Поле `project_gallery.project` обязано быть **того же типа**, что и `projects.id`. Если ранее bootstrap создал `project` как `uuid`/`char(36)` при integer PK, админка ломается при O2M. Актуальный `directus-bootstrap.mjs` подбирает тип по полю `projects.id`. Уже испорченную БД можно починить: `node scripts/migrate-sqlite-project-gallery-fk.mjs /путь/к/data.db` (Directus остановить).
+
+**Если в админке при открытии проекта — «Page Not Found»:** часто это сломанные метаданные O2M (`gallery_items`) после ручного дублирования связей или создания relation до поля. В DevTools → Network проверьте ответ `GET /items/projects/<uuid>`. Упростите схему: в Data Model удалите лишние связи «картинка ↔ проект», оставьте одну цепочку `project_gallery.project` → `projects` и O2M `gallery_items` на `projects`. Либо пере-создайте поле `gallery_items` и связь в правильном порядке (в новых версиях bootstrap сначала создаётся alias, затем relation). На пустой БД можно заново прогнать `directus-bootstrap.mjs`.
+
+**`[INTERNAL_SERVER_ERROR] Missing parentItem '1' of 'projects' when merging o2m nested items`** (при добавлении кадра в галерею на карточке проекта):
+
+1. **Обновите Directus до ≥ 11.4.0** — в 11.3.x были регрессии слияния O2M/M2O ([PR #24316](https://github.com/directus/directus/pull/24316)).
+2. **«Сироты» в `project_gallery`:** в БД не должно быть строк, где `project` не совпадает ни с одним `projects.id` (часто после экспериментов тип в колонке не UUID). В SQLite: `SELECT * FROM project_gallery WHERE project NOT IN (SELECT id FROM projects);` — удалите или исправьте такие строки.
+3. **Лишние alias-поля на `projects`** (ещё один M2M «файлы», дублирующая связь): как в [issue #24349](https://github.com/directus/directus/issues/24349), лишнее реляционное поле может ломать merge — оставьте только `image`, `gallery_items` и обычные поля.
+4. **Шаблон списка O2M:** если у поля `gallery_items` в интерфейсе указано `{{file.$thumbnail}}`, смените на простой шаблон (например `{{sort}}`) — см. актуальный `directus-bootstrap.mjs`.
+5. **Обходной путь без вложенного редактора:** создавайте записи в коллекции **`project_gallery`** отдельно (Content → Project Gallery → Create), в поле **Project** выберите нужный проект и **File** — картинку. Так обходится баг слияния на форме проекта.
 
 ### 2.2. Услуги (тарифы) — коллекция `services`
 
@@ -246,14 +264,17 @@ cd frontend && npm run build
 
 ## 7. Чеклист «с нуля до редактирования из CMS»
 
+Расширенный чеклист с командами проверки: [DIRECTUS-VPS-DEPLOY.md](./DIRECTUS-VPS-DEPLOY.md).
+
 - [ ] DNS: `A` для `cms` → IP сервера  
 - [ ] Directus установлен, systemd, порт 8055  
 - [ ] Nginx + SSL для `cms.agapedesign.ru`  
-- [ ] Коллекции `projects`, `services`, `process_steps` + singleton текста  
+- [ ] `npx directus database migrate:latest` при необходимости  
+- [ ] `node scripts/directus-bootstrap.mjs` (или `npm run directus:bootstrap` из корня репозитория)  
 - [ ] Роли: токен только на чтение для фронта  
-- [ ] Данные перенесены из `content.ts`  
-- [ ] В репозитории: `api/cms.ts` + env + загрузка в `App.tsx`  
-- [ ] Сборка на сервере с `VITE_CMS_*`  
+- [ ] Данные в CMS (bootstrap или ручной ввод)  
+- [ ] Фронт: `frontend/src/api/cms.ts` + `VITE_CMS_*` + `SiteContentProvider`  
+- [ ] Сборка с `frontend/.env.production` (см. `.env.production.example`)  
 
 ---
 
