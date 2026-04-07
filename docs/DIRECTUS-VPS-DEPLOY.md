@@ -209,7 +209,8 @@ curl -sS -u 'EMAIL:PASSWORD' "$DIRECTUS_URL/items/projects?limit=1" | head -c 40
 
 ```bash
 export TOKEN="…"
-curl -sS -H "Authorization: Bearer $TOKEN" \
+# Флаг -g (--globoff): иначе curl воспринимает [ ] в query как шаблон и даёт «bad range in URL»
+curl -gsS -H "Authorization: Bearer $TOKEN" \
   "$DIRECTUS_URL/items/projects?filter[status][_eq]=published&limit=1"
 ```
 
@@ -225,19 +226,36 @@ curl -sS -H "Authorization: Bearer $TOKEN" \
 
 **Проверка:**
 
-```bash
-export CMS="https://cms.ВАШ-ДОМЕН.ru"
-export TOKEN="…"
-curl -sS -o /dev/null -w "projects: %{http_code}\n" \
-  -H "Authorization: Bearer $TOKEN" \
-  "$CMS/items/projects?filter[status][_eq]=published&limit=1"
+В query Directus используются квадратные скобки (`filter[status][_eq]=…`). У **curl** символы `[` `]` по умолчанию включают режим glob; без отключения будет ошибка вида `curl: (3) bad range in URL`. Добавьте **`-g`** (это **`--globoff`**) перед URL.
 
-curl -sS -o /dev/null -w "site_content: %{http_code}\n" \
+```bash
+# Замените на ваш реальный поддомен (латиницей, как в браузере). Плейсхолдер из доки не подставлять.
+# Важно: БЕЗ слэша в конце. Иначе ${CMS}/items/... даст //items/... и Directus ответит
+# ROUTE_NOT_FOUND: "Route //items/projects doesn't exist."
+export CMS="https://cms.example.com"
+export TOKEN="…"
+
+# Убедитесь, что переменные заданы в ЭТОМ же сеансе терминала:
+echo "$CMS"
+# При необходимости срезать хвостовой слэш: CMS="${CMS%/}"
+
+curl -gsS -o /dev/null -w "projects: %{http_code}\n" \
   -H "Authorization: Bearer $TOKEN" \
-  "$CMS/items/site_content/singleton"
+  "${CMS}/items/projects?filter[status][_eq]=published&limit=1"
+
+curl -gsS -o /dev/null -w "site_content: %{http_code}\n" \
+  -H "Authorization: Bearer $TOKEN" \
+  "${CMS}/items/site_content/singleton"
 ```
 
-Ожидается **200** для обоих (если singleton по другому URL — фронт пробует оба варианта, см. `frontend/src/api/cms.ts`).
+Альтернатива без `-g`: закодировать скобки в URL, например  
+`filter%5Bstatus%5D%5B_eq%5D=published`.
+
+Если curl пишет **`URL rejected: No host part in the URL`**, а в выводе **`…: 000`** — почти всегда **`CMS` пустой** (не выполнили `export`, другой таб терминала, опечатка) или URL собрался без схемы/хоста. Проверка: `echo "[$CMS]"` должно показать полный `https://…`.
+
+Если в JSON Directus: **`Route //items/... doesn't exist`** — в URL двойной слэш после хоста: уберите **`/`** в конце `CMS` или выполните **`CMS="${CMS%/}"`**.
+
+Ожидается **200** для обоих (если singleton по другому URL — фронт пробует оба варианта, см. `frontend/src/api/cms.ts`). Во фронте `VITE_CMS_URL` тоже лучше без хвостового слэша (в коде он срезается, но так проще не путаться).
 
 ---
 
@@ -276,10 +294,29 @@ npm run build
 
 **Проверка:**
 
-- В браузере: сайт показывает тексты/проекты из CMS (измените заголовок в `site_content` и пересоберите или обновите кэш).
-- DevTools → Network: запросы к `…/items/projects`, `…/items/services` — **200**, не fallback на статический контент (см. консоль: при отсутствии `VITE_CMS_URL` фронт использует `content.ts`).
+- В браузере: сайт показывает данные из CMS. Тексты в **`site_content`** и опубликованные записи подтягиваются **при каждой полной перезагрузке страницы** (F5) — **пересборка фронта не нужна**, если уже зашили правильные `VITE_CMS_URL` и `VITE_CMS_TOKEN`. Пересобирайте только если меняли **сами переменные окружения** или код.
+- DevTools → Network: запросы к `…/items/projects`, `…/items/services`, `…/items/site_content` — **200**. Если `VITE_CMS_URL` не был задан при **сборке**, в бандле нет обращений к API — используется статика из `content.ts`.
 
-**CORS:** если фронт на **другом origin**, чем CMS, Directus должен разрешить origin сайта (настройки CORS в Directus / переменные окружения). Если API проксируется с того же домена (`/cms-directus` только для dev), в проде часто задают полный `VITE_CMS_URL` на поддомен и включают CORS для `https://agapedesign.ru`.
+### Изменил поле в админке, на сайте по-прежнему старое
+
+1. **Полная перезагрузка:** Ctrl+Shift+R / Cmd+Shift+R (или закрыть вкладку и открыть снова).
+2. **Черновик:** у **`projects`** и **`services`** на фронте только **`status = published`**. Черновик в админке на сайте не появится.
+3. **Сайт вообще не ходит в CMS:** откройте DevTools → **Network**, фильтр по `items` или по домену CMS. Нет запросов к Directus — при сборке не было `VITE_CMS_URL` / токена → нужен **`npm run build`** с `frontend/.env.production` и снова залить **`dist`**.
+4. **Запрос падает (401/403/CORS):** в консоли ошибки `fetch`; тогда срабатывает fallback и/или старый **sessionStorage** (`agape_site_content_v2`). Очистите хранилище сайта: DevTools → Application → Session storage → удалить ключ `agape_site_content_v2`, снова F5.
+5. **Редактировали не ту коллекцию/поле** — сверьтесь с [CMS.md](./CMS.md) (имена полей и singleton `site_content`).
+
+### CORS — простыми словами
+
+**Origin** в браузере — это схема + хост + порт страницы, с которой открыт сайт. Примеры:
+
+- Сайт: `https://agapedesign.ru` → origin **`https://agapedesign.ru`**
+- CMS: `https://cms.agapedesign.ru` → другой origin (другой поддомен).
+
+Скрипт на **основном сайте** делает `fetch('https://cms.agapedesign.ru/items/...')` — это **межсайтовый** запрос. Браузер спрашивает у Directus: «можно ли странице с `https://agapedesign.ru` читать ответ?». Если в ответе нет подходящих заголовков **CORS** (например `Access-Control-Allow-Origin`), браузер **блокирует** ответ, в консоли будет ошибка — фронт у вас тогда падает в **fallback** (старый контент из `content.ts` или кэш сессии), и правки из админки **не видны**.
+
+**Что сделать:** в настройках Directus (или в `.env` процесса Directus) разрешить origin основного сайта, например `https://agapedesign.ru`. Точные имена переменных зависят от версии Directus — см. [документацию Directus по CORS](https://directus.io/docs/self-hosted/config-options#cors).
+
+**Зачем в доке фигурирует `/cms-directus`:** в **разработке** Vite проксирует `/cms-directus` → локальный Directus, и в браузере запрос идёт на **тот же** origin, что и страница (`localhost:5173`), поэтому **CORS не мешает**. В **продакшене** такого прокси нет: в `VITE_CMS_URL` указывают **полный URL** CMS (`https://cms.…`), и тогда Directus должен явно разрешить origin **лендинга** (или вы поднимаете обратный прокси на основном домене, например `https://agapedesign.ru/api/cms/…` → Directus — тогда для браузера origin один, но это отдельная настройка Nginx).
 
 ---
 
@@ -307,6 +344,7 @@ npm run build
 | Симптом | Действие |
 |---------|----------|
 | Сайт не подхватывает CMS | Проверить `VITE_CMS_URL` при **сборке**, пересобрать; см. [cmsSessionCache](../frontend/src/content/cmsSessionCache.ts) и очистку sessionStorage |
+| Правки в админке не на сайте | F5 / сброс sessionStorage; статус **published**; нет ошибок CORS в консоли; см. подраздел выше в этапе 9 |
 | 403 на `/assets/…` | Токен с read на `directus_files`; для картинок с другого origin — `?access_token=` (уже в `cms.ts`) |
 | После обновления Directus — ошибки БД | `npx directus database migrate:latest` |
 | Docker Hub недоступен | Использовать установку через **npm**, как в этом гайде |

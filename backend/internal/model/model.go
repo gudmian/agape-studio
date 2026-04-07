@@ -10,6 +10,14 @@ type ContactRequest struct {
 	Message string `json:"message" validate:"max=2000"`
 }
 
+// Допустимые статусы заявки (воронка / работа с клиентом)
+const (
+	LeadStatusNew         = "new"
+	LeadStatusInProgress  = "in_progress"
+	LeadStatusDone        = "done"
+	LeadStatusArchived    = "archived"
+)
+
 // ContactRecord — запись в БД
 type ContactRecord struct {
 	ID        int64     `json:"id"`
@@ -17,7 +25,16 @@ type ContactRecord struct {
 	Phone     string    `json:"phone"`
 	Email     string    `json:"email"`
 	Message   string    `json:"message"`
+	Status    string    `json:"status"`
+	Notes     string    `json:"notes"`
 	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+}
+
+// LeadPatchRequest — частичное обновление заявки (админ API)
+type LeadPatchRequest struct {
+	Status *string `json:"status,omitempty"`
+	Notes  *string `json:"notes,omitempty"`
 }
 
 // APIResponse — стандартный конверт ответа

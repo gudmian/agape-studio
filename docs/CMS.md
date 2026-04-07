@@ -176,12 +176,24 @@ Directus слушает порт **8055** (или тот, что задали в
 
 ### 4C. Nginx — прокси на Directus
 
-Добавьте файл `/etc/nginx/sites-available/cms` (и симлинк в `sites-enabled`):
+Nginx принимает запросы с интернета (порты 80/443) и передаёт их на локальный **Directus** (`127.0.0.1:8055`). Отдельный файл в `sites-available` — обычная схема на Debian/Ubuntu; **симлинк** в `sites-enabled` «включает» этот сайт без копирования файла.
+
+#### Шаг 1 — конфиг в `sites-available`
+
+Создайте файл (замените `cms.agapedesign.ru` на ваш поддомен):
+
+```bash
+sudo nano /etc/nginx/sites-available/cms
+```
+
+Содержимое для **первого этапа (только HTTP, порт 80)** — так Certbot сможет проверить домен и выдать сертификат:
 
 ```nginx
 server {
     listen 80;
+    listen [::]:80;
     server_name cms.agapedesign.ru;
+
     location / {
         proxy_pass http://127.0.0.1:8055;
         proxy_http_version 1.1;
@@ -193,12 +205,115 @@ server {
 }
 ```
 
-Проверка и перезагрузка:
+Сохраните файл (`Ctrl+O`, Enter, `Ctrl+X` в nano).
+
+#### Шаг 2 — симлинк в `sites-enabled`
+
+**Зачем:** в основном конфиге Nginx обычно есть строка `include /etc/nginx/sites-enabled/*;` — обрабатываются только конфиги из этой папки. Файл в `sites-available` — «источник правды»; симлинк — короткая ссылка на него же, чтобы легко отключать сайт (`unlink` симлинка) без удаления файла.
+
+Создайте симлинк (имя справа — **абсолютный путь** к файлу в `sites-available`):
 
 ```bash
-nginx -t && systemctl reload nginx
-certbot --nginx -d cms.agapedesign.ru --non-interactive --agree-tos -m ваш@email.ru --redirect
+sudo ln -s /etc/nginx/sites-available/cms /etc/nginx/sites-enabled/cms
 ```
+
+Проверка, что ссылка создалась:
+
+```bash
+ls -la /etc/nginx/sites-enabled/cms
+# Должно быть что-то вроде: cms -> /etc/nginx/sites-available/cms
+```
+
+Если ошиблись, удалите только симлинк и создайте заново:
+
+```bash
+sudo rm /etc/nginx/sites-enabled/cms
+sudo ln -s /etc/nginx/sites-available/cms /etc/nginx/sites-enabled/cms
+```
+
+На чистой установке в `sites-enabled` часто лежит дефолтный `default` — он может перехватывать запросы по IP или конфликтовать по `server_name`. Если при открытии поддомена открывается не Directus, отключите дефолт:
+
+```bash
+sudo rm /etc/nginx/sites-enabled/default
+```
+
+(или переименуйте, если хотите сохранить файл: `sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-available/default.disabled`.)
+
+#### Шаг 3 — проверка синтаксиса и перезагрузка Nginx
+
+```bash
+sudo nginx -t
+```
+
+Ожидается: `syntax is ok` и `test is successful`. Затем:
+
+```bash
+sudo systemctl reload nginx
+```
+
+**Проверка до HTTPS:** с вашего компьютера (DNS уже указывает на VPS):
+
+```bash
+curl -sI http://cms.agapedesign.ru/admin/login | head -n 3
+```
+
+Должен быть ответ **200** или **3xx** от вашего сервера. Убедитесь, что **Directus запущен** на `8055`.
+
+#### Шаг 4 — установка Certbot (если ещё нет)
+
+На Ubuntu/Debian:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y certbot python3-certbot-nginx
+```
+
+#### Шаг 5 — выпуск сертификата Let’s Encrypt
+
+Условия: домен **уже** в DNS ссылается на IP этого сервера; порты **80** (и после выпуска **443**) доступны с интернета; Nginx слушает `:80` для вашего `server_name` (как в шаге 1).
+
+Интерактивный вариант (удобно первый раз — задаст вопросы по email и ToS):
+
+```bash
+sudo certbot --nginx -d cms.agapedesign.ru
+```
+
+Неинтерактивный вариант (скрипты, CI):
+
+```bash
+sudo certbot --nginx \
+  -d cms.agapedesign.ru \
+  --non-interactive \
+  --agree-tos \
+  -m ваш@email.ru \
+  --redirect
+```
+
+Что делает **`--nginx`:** Certbot сам правит конфиг Nginx — добавляет второй `server` для **443**, пути к сертификату и ключу, и блок для редиректа с HTTP на HTTPS.
+
+Что делает **`--redirect`:** для порта 80 настраивается редирект **301** на `https://…`, чтобы админка и API всегда шли по HTTPS.
+
+Проверка после выпуска:
+
+```bash
+curl -sI https://cms.agapedesign.ru/admin/login | head -n 5
+sudo certbot certificates
+```
+
+#### Автопродление
+
+Установщик обычно ставит **timer** systemd. Проверка:
+
+```bash
+sudo systemctl status certbot.timer
+sudo certbot renew --dry-run
+```
+
+Сертификаты Let’s Encrypt короткие (~90 дней); `renew` обновит их при приближении срока.
+
+#### Directus и публичный URL
+
+В **Settings → Project Settings** Directus укажите **Public URL** вида `https://cms.agapedesign.ru` — в тон с тем, что вы задали в `PUBLIC_URL` для systemd (раздел 4B).
 
 ---
 
@@ -223,6 +338,8 @@ certbot --nginx -d cms.agapedesign.ru --non-interactive --agree-tos -m ваш@em
 GET https://cms.agapedesign.ru/items/projects?filter[status][_eq]=published&sort=sort
 Authorization: Bearer <STATIC_TOKEN>
 ```
+
+В **curl** к тому же URL добавьте **`-g`** (`--globoff`), иначе `[` и `]` в строке запроса интерпретируются как шаблон и curl выдаст ошибку `bad range in URL`.
 
 Singleton:
 

@@ -1,22 +1,30 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
+
+	"github.com/go-chi/chi/v5"
 
 	"agape-backend/internal/model"
 	"agape-backend/internal/repository"
+	"agape-backend/internal/telegram"
 )
 
 type Handler struct {
 	db *repository.DB
+	tg *telegram.Client
 }
 
-func New(db *repository.DB) *Handler {
-	return &Handler{db: db}
+func New(db *repository.DB, tg *telegram.Client) *Handler {
+	return &Handler{db: db, tg: tg}
 }
 
 // Health — проверка состояния сервиса
@@ -54,7 +62,104 @@ func (h *Handler) Contact(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("new contact", "id", rec.ID, "email", rec.Email)
 
+	if h.tg != nil {
+		go h.notifyTelegram(rec)
+	}
+
 	writeJSON(w, http.StatusCreated, model.APIResponse[*model.ContactRecord]{
+		Success: true,
+		Data:    rec,
+	})
+}
+
+func (h *Handler) notifyTelegram(rec *model.ContactRecord) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := h.tg.NotifyNewContact(ctx, rec); err != nil {
+		slog.Error("telegram notify", "err", err, "lead_id", rec.ID)
+	}
+}
+
+// ListLeads — список заявок (админ)
+func (h *Handler) ListLeads(w http.ResponseWriter, r *http.Request) {
+	status := strings.TrimSpace(r.URL.Query().Get("status"))
+	limit := queryInt(r, "limit", 50)
+	offset := queryInt(r, "offset", 0)
+
+	if status != "" && !validLeadStatus(status) {
+		writeError(w, http.StatusBadRequest, "некорректный status")
+		return
+	}
+
+	list, err := h.db.ListLeads(status, limit, offset)
+	if err != nil {
+		slog.Error("list leads", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, model.APIResponse[[]model.ContactRecord]{
+		Success: true,
+		Data:    list,
+	})
+}
+
+// GetLead — одна заявка (админ)
+func (h *Handler) GetLead(w http.ResponseWriter, r *http.Request) {
+	id, err := parseIDParam(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "некорректный id")
+		return
+	}
+
+	rec, err := h.db.GetLead(id)
+	if err != nil {
+		if errors.Is(err, repository.ErrLeadNotFound) {
+			writeError(w, http.StatusNotFound, "не найдено")
+			return
+		}
+		slog.Error("get lead", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, model.APIResponse[*model.ContactRecord]{
+		Success: true,
+		Data:    rec,
+	})
+}
+
+// PatchLead — обновление статуса / заметок (админ)
+func (h *Handler) PatchLead(w http.ResponseWriter, r *http.Request) {
+	id, err := parseIDParam(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "некорректный id")
+		return
+	}
+
+	var patch model.LeadPatchRequest
+	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+
+	if msg := validateLeadPatch(&patch); msg != "" {
+		writeError(w, http.StatusUnprocessableEntity, msg)
+		return
+	}
+
+	rec, err := h.db.UpdateLead(id, &patch)
+	if err != nil {
+		if errors.Is(err, repository.ErrLeadNotFound) {
+			writeError(w, http.StatusNotFound, "не найдено")
+			return
+		}
+		slog.Error("patch lead", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, model.APIResponse[*model.ContactRecord]{
 		Success: true,
 		Data:    rec,
 	})
@@ -133,4 +238,46 @@ func validateContact(r *model.ContactRequest) string {
 		return "Сообщение слишком длинное (максимум 2000 символов)"
 	}
 	return ""
+}
+
+func validLeadStatus(s string) bool {
+	switch strings.TrimSpace(strings.ToLower(s)) {
+	case model.LeadStatusNew, model.LeadStatusInProgress, model.LeadStatusDone, model.LeadStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+func validateLeadPatch(p *model.LeadPatchRequest) string {
+	if p.Status == nil && p.Notes == nil {
+		return "Укажите status и/или notes"
+	}
+	if p.Status != nil {
+		s := strings.TrimSpace(*p.Status)
+		if s == "" || !validLeadStatus(s) {
+			return "Некорректный status (new, in_progress, done, archived)"
+		}
+		*p.Status = strings.ToLower(s)
+	}
+	if p.Notes != nil && utf8.RuneCountInString(*p.Notes) > 5000 {
+		return "Заметка слишком длинная (максимум 5000 символов)"
+	}
+	return ""
+}
+
+func queryInt(r *http.Request, key string, def int) int {
+	raw := strings.TrimSpace(r.URL.Query().Get(key))
+	if raw == "" {
+		return def
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil {
+		return def
+	}
+	return n
+}
+
+func parseIDParam(s string) (int64, error) {
+	return strconv.ParseInt(strings.TrimSpace(s), 10, 64)
 }

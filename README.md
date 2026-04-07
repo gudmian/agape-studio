@@ -92,5 +92,7 @@ cd frontend && npm run dev
 - [Дизайн-система](docs/DESIGN_SYSTEM.md)
 - [Фронтенд](docs/FRONTEND.md)
 - [Бэкенд](docs/BACKEND.md)
+- [Бэкенд на VPS (пошагово)](docs/BACKEND-VPS-SETUP.md)
 - [Деплой](docs/DEPLOY.md)
+- [Telegram-бот для заявок](docs/TELEGRAM-BOT-SETUP.md)
 - [CMS](docs/CMS.md)

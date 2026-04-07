@@ -19,6 +19,7 @@ import (
 	"agape-backend/internal/handler"
 	"agape-backend/internal/middleware"
 	"agape-backend/internal/repository"
+	"agape-backend/internal/telegram"
 )
 
 func main() {
@@ -37,7 +38,8 @@ func main() {
 	}
 	defer db.Close()
 
-	h := handler.New(db)
+	tg := telegram.New(cfg.TelegramBotToken, cfg.TelegramChatID)
+	h := handler.New(db, tg)
 	r := chi.NewRouter()
 
 	// ── Middleware ──
@@ -46,8 +48,8 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   strings.Split(cfg.CORSOrigins, ","),
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Content-Type"},
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Content-Type", "Authorization"},
 		MaxAge:           300,
 	}))
 
@@ -59,6 +61,13 @@ func main() {
 		r.Post("/contact", h.Contact)
 		r.Get("/projects", h.Projects)
 		r.Get("/services", h.Services)
+
+		r.Route("/leads", func(r chi.Router) {
+			r.Use(middleware.BearerAdmin(cfg.LeadsAdminToken))
+			r.Get("/", h.ListLeads)
+			r.Get("/{id}", h.GetLead)
+			r.Patch("/{id}", h.PatchLead)
+		})
 	})
 
 	// ── Сервер с graceful shutdown ──

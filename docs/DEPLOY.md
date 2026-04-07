@@ -13,6 +13,8 @@
 
 **Сайт:** https://agapedesign.ru
 
+**Пошаговая инструкция «с нуля»** (тот же VPS: Nginx + Go + SQLite + Telegram + `/api/leads`): [VPS-SETUP.md](./VPS-SETUP.md).
+
 ---
 
 ## Обновление сайта (после изменений в коде)
@@ -106,7 +108,7 @@ apt install -y nginx certbot python3-certbot-nginx
 ### 2. Клонировать репозиторий
 
 ```bash
-git clone https://github.com/your/agape.git /var/www/agape
+git clone https://github.com/gudmian/agape-studio.git /var/www/agape
 cd /var/www/agape
 ```
 

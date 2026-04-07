@@ -14,6 +14,9 @@ services:
       ENV: production
       DATABASE_URL: /app/data/agape.db
       CORS_ORIGINS: ${CORS_ORIGINS:-https://your-domain.com}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      LEADS_ADMIN_TOKEN: ${LEADS_ADMIN_TOKEN:-}
     volumes:
       - backend_data:/app/data
     healthcheck:
