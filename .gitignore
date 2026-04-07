@@ -12,7 +12,11 @@ backend/data/
 
 # Переменные окружения (НИКОГДА не коммитить)
 .env
+.env.production
 backend/.env
+
+# Собранный бинарник Go (не коммитить; собирать на сервере/в CI)
+backend/server
 
 # БД
 *.db
