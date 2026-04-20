@@ -158,3 +158,19 @@ sudo journalctl -u agape-backend -f
 ---
 
 См. также: [BACKEND.md](./BACKEND.md) (переменные и API), [VPS-SETUP.md](./VPS-SETUP.md) (продакшен).
+
+### Не путать с `LEADS_ADMIN_TOKEN`
+
+**`LEADS_ADMIN_TOKEN`** — это **не** токен BotFather и **не** часть Telegram. Это **ваш собственный секрет** для защиты HTTP-эндпоинтов списка заявок (`GET` / `PATCH` `/api/leads`).
+
+**Чем заполнить:** любая длинная неугадываемая строка. Удобно сгенерировать один раз:
+
+```bash
+openssl rand -hex 32
+```
+
+Скопируйте вывод в `backend/.env` как значение `LEADS_ADMIN_TOKEN` (без кавычек, без пробелов). При запросах к `/api/leads` указывайте тот же текст:
+
+`Authorization: Bearer <то_что_в_LEADS_ADMIN_TOKEN>`
+
+Если переменная пустая — админ-роуты заявок отключены (ответ `503`). Подробнее: [BACKEND.md](./BACKEND.md) (раздел «Заявки для работы с клиентами»).

@@ -35,7 +35,7 @@ go run ./cmd/server/main.go
 | `ENV` | `development` | Окружение (`development` / `production`) |
 | `TELEGRAM_BOT_TOKEN` | — | Токен бота Telegram; пусто — уведомления не отправляются |
 | `TELEGRAM_CHAT_ID` | — | ID чата или пользователя для уведомлений о новых заявках |
-| `LEADS_ADMIN_TOKEN` | — | Секрет для `/api/leads`; пусто — эти маршруты отвечают `503` |
+| `LEADS_ADMIN_TOKEN` | — | **Не из Telegram.** Произвольная длинная случайная строка, которую вы сами задаёте (например `openssl rand -hex 32`). Тот же текст передаётся в заголовке `Authorization: Bearer …` при вызове `/api/leads`. Пусто — маршруты `/api/leads*` отвечают `503` |
 
 **Пошаговая настройка Telegram** (BotFather, `chat_id`, проверки `curl`, связка с `.env`): [TELEGRAM-BOT-SETUP.md](./TELEGRAM-BOT-SETUP.md).
 
