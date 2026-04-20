@@ -1,0 +1,10 @@
+frontend/src/components/sections/PortfolioGalleryModal.tsx
+  353496c 66,70,75,79-80,84-85
+frontend/src/components/sections/PortfolioSection.tsx
+  353496c 83,85-88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "base_commit_sha": "44bed5286c4e03db49547505db2919186a7732e6",
+  "prompts": {}
+}
