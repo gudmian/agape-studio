@@ -47,7 +47,7 @@ export function Header() {
         <div className={styles.ctaDesktop}>
           <Button
             size="sm"
-            variant={scrolled ? 'primary' : 'primary'}
+            variant="primary"
             onClick={() => handleNavClick('#contact')}
           >
             ОБСУДИТЬ ПРОЕКТ

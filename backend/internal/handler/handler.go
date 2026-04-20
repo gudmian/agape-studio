@@ -37,11 +37,6 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 
 // Contact — приём заявки с формы
 func (h *Handler) Contact(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	var req model.ContactRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")

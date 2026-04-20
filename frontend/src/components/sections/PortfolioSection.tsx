@@ -80,7 +80,12 @@ export function PortfolioSection() {
         </div>
       </div>
 
-      <PortfolioGalleryModal project={galleryProject} open={galleryOpen} onClose={closeGallery} />
+      <PortfolioGalleryModal
+        key={galleryProject?.id ?? 'empty'}
+        project={galleryProject}
+        open={galleryOpen}
+        onClose={closeGallery}
+      />
     </section>
   );
 }

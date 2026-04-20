@@ -32,15 +32,6 @@ export function PortfolioGalleryModal({ project, open, onClose }: Props) {
   const showThumbs = count > 1;
 
   useEffect(() => {
-    setIndex(0);
-  }, [project?.id]);
-
-  useEffect(() => {
-    if (count === 0) return;
-    setIndex((i) => Math.min(i, count - 1));
-  }, [count]);
-
-  useEffect(() => {
     if (!open) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -72,26 +63,26 @@ export function PortfolioGalleryModal({ project, open, onClose }: Props) {
       if (count < 2) return;
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        setIndex((i) => (i - 1 + count) % count);
+        setIndex((safeIndex - 1 + count) % count);
       }
       if (e.key === 'ArrowRight') {
         e.preventDefault();
-        setIndex((i) => (i + 1) % count);
+        setIndex((safeIndex + 1) % count);
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, onClose, count]);
+  }, [open, onClose, count, safeIndex]);
 
   const goPrev = useCallback(() => {
     if (count < 2) return;
-    setIndex((i) => (i - 1 + count) % count);
-  }, [count]);
+    setIndex((safeIndex - 1 + count) % count);
+  }, [count, safeIndex]);
 
   const goNext = useCallback(() => {
     if (count < 2) return;
-    setIndex((i) => (i + 1) % count);
-  }, [count]);
+    setIndex((safeIndex + 1) % count);
+  }, [count, safeIndex]);
 
   if (!open || !project || typeof document === 'undefined') {
     return null;
